@@ -6,6 +6,7 @@ dotenv.config();
 
 const app: Express = express();
 const port = process.env.PORT || 3000;
+const host = process.env.HOST || "0.0.0.0";
 
 const octokit = new Octokit({
     auth: process.env.GITHUB_KEY,
@@ -174,6 +175,6 @@ app.get("/user", getUserController);
 app.get("/user/readme", getUserReadmeController);
 app.get("/projects", getProjectsController);
 
-app.listen(port, () => {
-    console.log(`[server]: Server is running at http://localhost:${port}`);
+app.listen(port as number, host, () => {
+    console.log(`[server]: Server is running at http://${host}:${port}`);
 });

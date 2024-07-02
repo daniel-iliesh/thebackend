@@ -1,16 +1,23 @@
 import express, { Express, Request, Response } from "express";
 import dotenv from "dotenv";
 import { Octokit } from "@octokit/rest";
+import cors from "cors";
 
 dotenv.config();
 
 const app: Express = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 8080;
 const host = process.env.HOST || "0.0.0.0";
 
 const octokit = new Octokit({
     auth: process.env.GITHUB_KEY,
 });
+
+app.use(cors({
+    origin: process.env.FRONT_ORIGIN, // Replace with your frontend URL
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+}));
 
 // Controller for getting user data
 async function getUserController(req: Request, res: Response) {
@@ -171,6 +178,28 @@ async function getProjectsController(req: Request, res: Response) {
     }
 }
 
+// Controller for getting a specific repo README
+async function getRepoReadmeController(req: Request, res: Response) {
+    const repoName = req.params.name;
+    try {
+        const { data } = await octokit.request(
+            `GET /repos/daniel-iliesh/${repoName}/readme`,
+            {
+                username: "daniel-iliesh",
+                headers: {
+                    "X-GitHub-Api-Version": "2022-11-28",
+                    accept: "application/vnd.github.html+json",
+                },
+            }
+        );
+        res.json(data);
+    } catch (error) {
+        console.error(`Error fetching README for repo ${repoName}:`, error);
+        res.status(500).json({ error: `Failed to fetch README for repo ${repoName}` });
+    }
+}
+
+app.get("/repos/:name/readme", getRepoReadmeController);
 app.get("/user", getUserController);
 app.get("/user/readme", getUserReadmeController);
 app.get("/projects", getProjectsController);
